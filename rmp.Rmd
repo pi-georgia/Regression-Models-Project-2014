@@ -196,23 +196,9 @@ So, it appears that the **existence of the manual transmission, indeed improves 
 How much better is the manual transmission for mpg? 
 With 95% confidence this is quantified by getting predicted values from our model (fit3)
 ```{r, message=FALSE, warning=FALSE, echo=TRUE} 
-sumCoef<-summary(fit5)$coefficients 
+sumCoef<-summary(fit6)$coefficients 
 coefficients <- sumCoef[1,1]+c(-1,1)*qt(.975,df=fit5$df)*sumCoef[1,2]
 
 ```
 The results move in the zone of **`r coefficients[1]`** to  **`r coefficients[2]`**.
-The fact that the Confidence interval contains, negative, zero and positive values means that **I cannot define**
--1) whether mpg increases or decreases.
--2) how much it will either increase or decrease.
 
-This with the model including other variables.
-
-
-If transmission was the only variable, then :
-
-```{r, message=FALSE, warning=FALSE, echo=TRUE} 
-fitam<-lm(formula = mpg ~ am,  data = mtc) ;fam<-summary(fitam)
-sumCoef<-fam$coefficients 
-coefficients2 <-sumCoef[1,1]+c(-1,1)*qt(.975,df=fam$df)*sumCoef[1,2]
-```
-With 95% confidence a manual transmission gives **`r coefficients2[1]`** to **`r coefficients2[2]`** miles per gallon more than an automatic transmission.
