@@ -1,131 +1,218 @@
-Project Regression Models : The Motor Trend Analyst
+---
+title: "Motor Trend Analysis - a regression approach"
+author: "Georgia P"
+date: "2014"
+output: html_document
+---
 ========================================================
 
-**Questions**
+##Executive summary
+
+###Questions
 1. "Is an automatic or manual transmission better for MPG”
 2. "Quantify the MPG difference between automatic and manual transmissions"
 
-**Executive summary**
+**Manual transmission** appears to give **better mpg efficiency** in cars tested, yet quantifying the improvement varies significantly with other characteristics of the cars examined. So its better to keep looking around for other characteristics that also play a significant role in mpg efficiency.
 
-Manual transmission appear to give better mpg efficiency in cars tested, yet quantifying the improvement varies significantly with other characteristics of the cars examined. So its better looking around for other characteristics that also play a significant role in mpg efficiency.
-
-**Analysis Method**
-1. Explore datasets, to understand variables correlations and approach
-2. Fit mutliple models, compare their diagnostics and pick best
-3. Compare best model fit.
-4. Calculate difference of estimated MPG for these two cases.
+##Methodology
+1. Explored datasets, to understand variables correlations and approach
+2. Fitted mutliple models, compared their diagnostics and picked models shortlist
+3. Compared best model fit.
+4. Calculated difference of estimated MPG for the two cases (manual, automatic).
 
 
-**Analysis**
+##Analysis
 
 By checking the details of the mtcars dataset, the variable that defines the transmission is "am", a dummyvariable, with values : am   Transmission (0 = automatic, 1 = manual), that for convenience, I will rename to "auto" & "manual" respectively.
 
 
-PHASE 1 - **EXPLORE**
-```{r}
+###PHASE 1 - **EXPLORE**
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 data(mtcars)
 mtc<-data.frame(mtcars)
 ```
-First, I will explore correlations in this set to discover which variables are relatively significant variables to include in the model and which aren't
-```{ro}
+First, I will explore correlations in this set to discover which ones are the relatively **significant variables** to include in the model and which aren't.
+```{r, message=FALSE, warning=FALSE, echo=TRUE}
 pairs(mtc, panel = panel.smooth, main = "MT Cars", col = 13 + (mtc$am >0))
 ```
-I observe that indeed a few variables are correlated in with each other and with mpg, presenting a monotonous distribution.
+I observe that indeed a few variables are correlated with each other and with mpg, presenting a monotonous distribution.
 Also by coloring the two transmission types, I notice that they are distinct.
 
+####Principal Components Analysis
 Then, I will quantify these correlations of variables to exclude those that are highly correlated with each other
-```{ri}
+```{r , message=FALSE, warning=FALSE, echo=TRUE}
  M<-abs(cor(mtc))
     which(M> 0.9, arr.ind=T)
 ```
     
-Variables disp and cyl have correlation >0.9 so we could use only one of them as a predictor. If I want to select a few more that appear to highly correlated, I lower my threshold to 0.8 :
+Variables disp and cyl present **correlation >0.9** so we could use only one of them as a predictor. If I want to select a few more that appear to highly correlated, I lower my threshold to 0.8 :
 
-```{rm} 
+```{r, message=FALSE, warning=FALSE, echo=TRUE} 
 which(M> 0.8, arr.ind=T)
 ```
-I notice that the following are the most correlated with the outcome (mpg) : wt,cyl, disp,hp - So if I keep those with best mpg correlation I select : **wt** (and exclude disp) & **cyl** (andxclude hp, vs, disp) &
+I notice that the following variables are the most correlated with the outcome (mpg) : 
+1.wt
+2.cyl
+3.disp
+4.hp 
+
+So if I keep those with best mpg correlation I select : **wt** (and exclude disp) & **cyl** (and exclude hp, vs, disp).
 So finally I conclude to the following variables as my principle components :
 wt, cyl, am, gear, drat, qsec, card
 
-PHASE 2 : **FIT DIFFERENT MODELS FOR AM=1**
+###PHASE 2 : **FIT DIFFERENT MODELS FOR AM=1**
 
-Let's check what fitting with the above insights yields to. First I convert my dummy variable in a character set, to make my results more easily interpretable.
-```{rax} 
+Let's check what fitting with the above insights yields to. 
+First I convert my dummy variable in a character set, to make my results more easily interpretable.
+```{r, message=FALSE, warning=FALSE, echo=TRUE} 
 mtc$am<-as.character(mtc$am)
 mtc$am[mtc$am=="0"]<-"auto"
 mtc$am[mtc$am=="1"]<-"manual"
 ```
-Then I fit various models, one generic with all variables and a few incorporating the selections of principal variables I have done before.
-```{rx} 
-  fit<-lm(formula = mpg ~ .,  data = mtc); f0<-summary(fit)
-  fit1<-lm(formula = mpg ~ wt + cyl + am + gear + drat + qsec + carb,  data = mtc) ;f1<-summary(fit1)
-  fit2<-lm(formula = mpg ~ wt  + am + gear + drat + qsec + carb,  data = mtc); f2<-summary(fit2)
-  fit3<-lm(formula = mpg ~ wt  + am  + drat + qsec + carb,  data = mtc); f3<-summary(fit3)
-  fit4<-lm(formula = mpg ~ wt  + am  + drat ,  data = mtc); f4<-summary(fit4)
-```
-For the above models I check some diagnostics 
-```{rz} 
-anova(fit1,fit1,fit2, fit3, fit4)
-paste("Residuals Variation : f0:", f0$sigma, "f1:" ,f1$sigma,"f2:" , f2$sigma, "f3:" , f3$sigma,"f4:" , f4$sigma) 
-summary(fit)$coefficients ; summary(fit3)$coefficients; summary(fit4)$coefficients; 
-```
-I observe that indeed the model fit3 with the fewest predictors (regressors) is the one with strongest coefficients, and smaller standard error, as well as an minimal residual variation.
-This can be visualized by plotting residuals for model all (in red) versus model with fewest significant variables (blue) and the one with fewest variables (signficant or not, green)
 
-```{rb} 
-e0 <- resid(fit)
-e3 <- resid(fit3)
+Then I fit various models, one generic with all variables and a few more down the road incorporating the selections of principal variables I have done before.
+
+```{r, message=FALSE, warning=FALSE, echo=TRUE} 
+  fit1<-lm(formula = mpg ~ .,  data = mtc) 
+  f1<-summary(fit1)
+  fit2<-lm(formula = mpg ~ wt + cyl + am + gear + drat + qsec + carb,  data = mtc)
+  f2<-summary(fit2)
+  fit3<-lm(formula = mpg ~ wt  + am + gear + drat + qsec + carb,  data = mtc)
+  f3<-summary(fit3)
+  fit4<-lm(formula = mpg ~ wt  + am  + drat + qsec + carb,  data = mtc)
+  f4<-summary(fit4)
+  fit5<-lm(formula = mpg ~ wt  + am  + drat ,  data = mtc)
+  f5<-summary(fit5)
+  fit6<-lm(formula = mpg ~ am ,  data = mtc)
+  f6<-summary(fit6)
+```
+
+For the above models I check diagnostics with anova
+```{r, message=FALSE, warning=FALSE, echo=TRUE} 
+anova(fit1,fit2,fit3, fit4, fit5, fit6)
+```
+
+It appears that **Model 6 (where transimission type is the only variable) is top performing**.
+To confirm I will check the Standard Error and T-statistics / Type I error probability as by summarizing model statistics :   
+```{r, message=FALSE, warning=FALSE, echo=FALSE} 
+f1s <- summary(fit1)$coefficients[1,]  
+f2s <-summary(fit2)$coefficients[1,]  
+f3s <-summary(fit3)$coefficients[1,]
+f4s <-summary(fit4)$coefficients[1,]   
+f5s <-summary(fit5)$coefficients[1,] 
+f6s <-summary(fit6)$coefficients[1,] 
+
+paste("Model 1 : ") ;f1s  
+paste("Model 2 : ") ;f2s
+paste("Model 3 : ") ;f3s  
+paste("Model 4 : ");f4s   
+paste("Model 5 : ");f5s 
+paste("Model 6 : ");f6s   
+
+f6error <- summary(fit6)$coefficients[1,4]
+f6serror <-summary(fit6)$coefficients[1,2]
+f6sincrease <-summary(fit6)$coefficients[1,1]
+```
+
+Again, Model 6 presents very small probability of Type I error = `r f6error ` and the lowest standard error  = `r f6serror ` 
+
+**Residuals Variation for each model** :   
+
+-Model 1 : `r round(f1$sigma,3)`    
+-Model 2 : `r round(f2$sigma,3)`   
+-Model 3 : `r round(f3$sigma,3)`   
+-Model 4 : `r round(f4$sigma,3)`   
+-Model 5 : `r round(f5$sigma,3)`    
+-Model 6 : `r round(f6$sigma,3)` 
+
+I observe that indeed the model ** where Transmission type is the only predictor (regressors)** is the one with strongest coefficients, and smaller standard error, as well as an minimal residual variation.
+
+This can be visualized by plotting residuals for every model.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE} 
+e1 <- resid(fit1); e3 <- resid(fit3) ; e2 <- resid(fit2)
 e4 <- resid(fit4)
-par(mfrow = c(1, 3))
-plot(mtc$mpg, e0,  
+e5 <- resid(fit5) ; e6 <- resid(fit6)
+par(mfrow = c(1, 5))
+plot(mtc$mpg, e1,  
      xlab = "miles per gallon", 
      ylab = "Residuals (Fit all)", 
+     main="Model 1",
      bg = "lightblue", 
-     col = "black", cex = 2, pch = 21,frame = FALSE)
+     col = "gray", cex = 2, pch = 21,frame = FALSE)
 abline(h = 0, lwd = 2)
 for (i in 1 : length(mtc$mpg)) 
-lines(c(mtc$mpg[i], mtc$mpg[i]),c(e0[i], 0), col = "red" , lwd = 2)
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e1[i], 0), col = "azure" , lwd = 2)
+
+plot(mtc$mpg, e2,  
+     xlab = "miles per gallon", 
+     ylab = "Residuals (Fit Less-Is-More)", 
+      main="Model 2",
+     bg = "lightblue", 
+     col = "gray", cex = 2, pch = 21,frame = FALSE)
+abline(h = 0, lwd = 2)
+for (i in 1 : length(mtc$mpg)) 
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e2[i], 0), col = "violetred" , lwd = 2)
 
 plot(mtc$mpg, e3,  
      xlab = "miles per gallon", 
      ylab = "Residuals (Fit Less-Is-More)", 
+      main="Model 3",
      bg = "lightblue", 
-     col = "black", cex = 2, pch = 21,frame = FALSE)
+     col = "gray", cex = 2, pch = 21,frame = FALSE)
 abline(h = 0, lwd = 2)
 for (i in 1 : length(mtc$mpg)) 
-lines(c(mtc$mpg[i], mtc$mpg[i]),c(e3[i], 0), col = "blue" , lwd = 2)
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e3[i], 0), col = "violetred" , lwd = 2)
 
 plot(mtc$mpg, e4,  
      xlab = "miles per gallon", 
-     ylab = "Residuals (Fit Skinny)", 
+     ylab = "Residuals (Fit Less-Is-More)", 
+      main="Model 4",
      bg = "lightblue", 
-     col = "black", cex = 2, pch = 21,frame = FALSE)
+     col = "gray", cex = 2, pch = 21,frame = FALSE)
 abline(h = 0, lwd = 2)
 for (i in 1 : length(mtc$mpg)) 
-lines(c(mtc$mpg[i], mtc$mpg[i]),c(e4[i], 0), col = "green" , lwd = 2)
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e4[i], 0), col = "violetred" , lwd = 2)
+
+plot(mtc$mpg, e5,  
+     xlab = "miles per gallon", 
+     ylab = "Residuals (Fit Skinny)",
+       main="Model 5",
+     bg = "lightblue", 
+     col = "gray", cex = 2, pch = 21,frame = FALSE)
+abline(h = 0, lwd = 2)
+for (i in 1 : length(mtc$mpg)) 
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e5[i], 0), col = "wheat" , lwd = 2)
 
 ```
 
 
-PHASE 3 : **CALCULATE CASES**
-From the coefficients it occurs that a manual transmission increases the efficiency of miles per gallon by 2.96 with a standard error of 1.6233. So, it appears that the existence of the manual transmission, indeed improves mpg.
+###PHASE 3 : **CALCULATE CASES**
+From the coefficients it occurs that a manual transmission **increases the efficiency of miles per gallon by `r f5sincrease `  with a standard error of `r f5serror ` **. 
+So, it appears that the **existence of the manual transmission, indeed improves mpg**.
 
-PHASE 4 : **Quantify Impact on MPG**
+###PHASE 4 : **Quantify Impact on MPG**
 
 How much better is the manual transmission for mpg? 
-With confidence of 97% this is quantified by getting predicted values from our model (fit3)
-```{rab} 
-sumCoef<-summary(fit3)$coefficients 
-sumCoef[1,1]+c(-1,1)*qt(.975,df=fit5$df)*sumCoef[1,2]
+With 95% confidence this is quantified by getting predicted values from our model (fit3)
+```{r, message=FALSE, warning=FALSE, echo=TRUE} 
+sumCoef<-summary(fit5)$coefficients 
+coefficients <- sumCoef[1,1]+c(-1,1)*qt(.975,df=fit5$df)*sumCoef[1,2]
 
 ```
-The results move in the zone of -6.99 to 26.84 which means that there is significant challenge in predicting the change in mpg per transmission type with other variables included. 
+The results move in the zone of **`r coefficients[1]`** to  **`r coefficients[2]`**.
+The fact that the Confidence interval contains, negative, zero and positive values means that **I cannot define**
+-1) whether mpg increases or decreases.
+-2) how much it will either increase or decrease.
+
+This with the model including other variables.
+
+
 If transmission was the only variable, then :
 
-```{rabx} 
+```{r, message=FALSE, warning=FALSE, echo=TRUE} 
 fitam<-lm(formula = mpg ~ am,  data = mtc) ;fam<-summary(fitam)
 sumCoef<-fam$coefficients 
-sumCoef[1,1]+c(-1,1)*qt(.975,df=fitam$df)*sumCoef[1,2]
+coefficients2 <-sumCoef[1,1]+c(-1,1)*qt(.975,df=fam$df)*sumCoef[1,2]
 ```
-With 97,5% confidence a manual transmission gives 14.85 to 19.44 miles per gallon more than an automatic transmission.
+With 95% confidence a manual transmission gives **`r coefficients2[1]`** to **`r coefficients2[2]`** miles per gallon more than an automatic transmission.
