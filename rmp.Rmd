@@ -1,5 +1,5 @@
 ---
-title: "Motor Trend Analysis - a regression approach"
+title: "Transmission impact on Motor mpg - a regression approach"
 author: "Georgia P"
 date: "2014"
 output: html_document
@@ -12,7 +12,8 @@ output: html_document
 1. "Is an automatic or manual transmission better for MPG”
 2. "Quantify the MPG difference between automatic and manual transmissions"
 
-**Manual transmission** appears to give **better mpg efficiency** in cars tested, yet quantifying the improvement varies significantly with other characteristics of the cars examined. So its better to keep looking around for other characteristics that also play a significant role in mpg efficiency.
+**Manual transmission** appears to give **better mpg efficiency** in cars tested by minimum  
+**~15** mpg and maximum  **~20** mpg versus automatic transmission.
 
 ##Methodology
 1. Explored datasets, to understand variables correlations and approach
@@ -42,13 +43,13 @@ Also by coloring the two transmission types, I notice that they are distinct.
 Then, I will quantify these correlations of variables to exclude those that are highly correlated with each other
 ```{r , message=FALSE, warning=FALSE, echo=TRUE}
  M<-abs(cor(mtc))
-    which(M> 0.9, arr.ind=T)
+ wM <- which(M> 0.9, arr.ind=T)
 ```
     
 Variables disp and cyl present **correlation >0.9** so we could use only one of them as a predictor. If I want to select a few more that appear to highly correlated, I lower my threshold to 0.8 :
 
 ```{r, message=FALSE, warning=FALSE, echo=TRUE} 
-which(M> 0.8, arr.ind=T)
+wM2 <-which(M> 0.8, arr.ind=T)
 ```
 I notice that the following variables are the most correlated with the outcome (mpg) : 
 1.wt
@@ -95,7 +96,7 @@ anova(fit1,fit2,fit3, fit4, fit5, fit6)
 It appears that **Model 6 (where transimission type is the only variable) is top performing**.
 To confirm I will check the Standard Error and T-statistics / Type I error probability as by summarizing model statistics :   
 ```{r, message=FALSE, warning=FALSE, echo=FALSE} 
-f1s <- summary(fit1)$coefficients[1,]  
+f1s <-summary(fit1)$coefficients[1,]  
 f2s <-summary(fit2)$coefficients[1,]  
 f3s <-summary(fit3)$coefficients[1,]
 f4s <-summary(fit4)$coefficients[1,]   
@@ -112,9 +113,11 @@ paste("Model 6 : ");f6s
 f6error <- summary(fit6)$coefficients[1,4]
 f6serror <-summary(fit6)$coefficients[1,2]
 f6sincrease <-summary(fit6)$coefficients[1,1]
+
+f6
 ```
 
-Again, Model 6 presents very small probability of Type I error = `r f6error ` and the lowest standard error  = `r f6serror ` 
+Again, Model 6 presents very small probability of Type I error = `r round(f6error,2) ` and the lowest standard error  = `r round(f6serror,2) ` 
 
 **Residuals Variation for each model** :   
 
@@ -125,28 +128,28 @@ Again, Model 6 presents very small probability of Type I error = `r f6error ` an
 -Model 5 : `r round(f5$sigma,3)`    
 -Model 6 : `r round(f6$sigma,3)` 
 
-I observe that indeed the model ** where Transmission type is the only predictor (regressors)** is the one with strongest coefficients, and smaller standard error, as well as an minimal residual variation.
+I observe that indeed the model ** where Transmission type is the only predictor (regressors)** is the one with strongest coefficients, and smaller standard error, as well as an maximum residual variation explained by the model.
 
 This can be visualized by plotting residuals for every model.
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE} 
 e1 <- resid(fit1); e3 <- resid(fit3) ; e2 <- resid(fit2)
-e4 <- resid(fit4)
-e5 <- resid(fit5) ; e6 <- resid(fit6)
-par(mfrow = c(1, 5))
+e4 <- resid(fit4); e5 <- resid(fit5) ; e6 <- resid(fit6)
+
+par(mfrow = c(2, 3))
 plot(mtc$mpg, e1,  
-     xlab = "miles per gallon", 
-     ylab = "Residuals (Fit all)", 
+    xlab = "miles per gallon", 
+     ylab = "Residuals", 
      main="Model 1",
      bg = "lightblue", 
      col = "gray", cex = 2, pch = 21,frame = FALSE)
-abline(h = 0, lwd = 2)
+abline(fit1, lwd = 2)
 for (i in 1 : length(mtc$mpg)) 
-lines(c(mtc$mpg[i], mtc$mpg[i]),c(e1[i], 0), col = "azure" , lwd = 2)
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e1[i], 0), col = "seagreen" , lwd = 2)
 
 plot(mtc$mpg, e2,  
      xlab = "miles per gallon", 
-     ylab = "Residuals (Fit Less-Is-More)", 
+     ylab = "Residuals", 
       main="Model 2",
      bg = "lightblue", 
      col = "gray", cex = 2, pch = 21,frame = FALSE)
@@ -166,17 +169,17 @@ lines(c(mtc$mpg[i], mtc$mpg[i]),c(e3[i], 0), col = "violetred" , lwd = 2)
 
 plot(mtc$mpg, e4,  
      xlab = "miles per gallon", 
-     ylab = "Residuals (Fit Less-Is-More)", 
+     ylab = "Residuals", 
       main="Model 4",
      bg = "lightblue", 
      col = "gray", cex = 2, pch = 21,frame = FALSE)
 abline(h = 0, lwd = 2)
 for (i in 1 : length(mtc$mpg)) 
-lines(c(mtc$mpg[i], mtc$mpg[i]),c(e4[i], 0), col = "violetred" , lwd = 2)
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e4[i], 0), col = "sienna2" , lwd = 2)
 
 plot(mtc$mpg, e5,  
      xlab = "miles per gallon", 
-     ylab = "Residuals (Fit Skinny)",
+     ylab = "Residuals",
        main="Model 5",
      bg = "lightblue", 
      col = "gray", cex = 2, pch = 21,frame = FALSE)
@@ -184,21 +187,34 @@ abline(h = 0, lwd = 2)
 for (i in 1 : length(mtc$mpg)) 
 lines(c(mtc$mpg[i], mtc$mpg[i]),c(e5[i], 0), col = "wheat" , lwd = 2)
 
+plot(mtc$mpg, e6,  
+     xlab = "miles per gallon", 
+     ylab = "Residuals",
+       main="Model 6",
+     bg = "lightblue", 
+     col = "gray", cex = 2, pch = 21,frame = FALSE)
+abline(h = 0, lwd = 2)
+for (i in 1 : length(mtc$mpg)) 
+lines(c(mtc$mpg[i], mtc$mpg[i]),c(e6[i], 0), col = "steelblue" , lwd = 2)
 ```
 
 
 ###PHASE 3 : **CALCULATE CASES**
-From the coefficients it occurs that a manual transmission **increases the efficiency of miles per gallon by `r f5sincrease `  with a standard error of `r f5serror ` **. 
+From the coefficients it occurs that a manual transmission **increases the efficiency of miles per gallon by `r round(f6sincrease,2) `  with a standard error of `r round(f6serror,2) ` **. 
 So, it appears that the **existence of the manual transmission, indeed improves mpg**.
 
 ###PHASE 4 : **Quantify Impact on MPG**
 
 How much better is the manual transmission for mpg? 
-With 95% confidence this is quantified by getting predicted values from our model (fit3)
+
+With 95% confidence this is quantified by getting predicted values from our model (fit6)
+
 ```{r, message=FALSE, warning=FALSE, echo=TRUE} 
+#get coefficients
 sumCoef<-summary(fit6)$coefficients 
+#calculate confidence intervals
 coefficients <- sumCoef[1,1]+c(-1,1)*qt(.975,df=fit5$df)*sumCoef[1,2]
 
 ```
-The results move in the zone of **`r coefficients[1]`** to  **`r coefficients[2]`**.
+The results move in the zone of **`r round(coefficients[1],2) `** to  **`r round(coefficients[2],2)`**.
 
