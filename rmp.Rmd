@@ -1,8 +1,10 @@
 ---
 title: "Transmission impact on Motor mpg - a regression approach"
 author: "Georgia P"
-date: "2014"
-output: html_document
+date: '2014'
+output:
+  html_document:
+    keep_md: yes
 ---
 ========================================================
 
@@ -27,7 +29,7 @@ output: html_document
 By checking the details of the mtcars dataset, the variable that defines the transmission is "am", a dummyvariable, with values : am   Transmission (0 = automatic, 1 = manual), that for convenience, I will rename to "auto" & "manual" respectively.
 
 
-###PHASE 1 - **EXPLORE**
+###Data Exploration
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 data(mtcars)
 mtc<-data.frame(mtcars)
@@ -61,7 +63,7 @@ So if I keep those with best mpg correlation I select : **wt** (and exclude disp
 So finally I conclude to the following variables as my principle components :
 wt, cyl, am, gear, drat, qsec, card
 
-###PHASE 2 : **FIT DIFFERENT MODELS FOR AM=1**
+###Model Fit for Manual Transmission
 
 Let's check what fitting with the above insights yields to. 
 First I convert my dummy variable in a character set, to make my results more easily interpretable.
@@ -114,7 +116,6 @@ f6error <- summary(fit6)$coefficients[1,4]
 f6serror <-summary(fit6)$coefficients[1,2]
 f6sincrease <-summary(fit6)$coefficients[1,1]
 
-f6
 ```
 
 Again, Model 6 presents very small probability of Type I error = `r round(f6error,2) ` and the lowest standard error  = `r round(f6serror,2) ` 
@@ -199,15 +200,8 @@ lines(c(mtc$mpg[i], mtc$mpg[i]),c(e6[i], 0), col = "steelblue" , lwd = 2)
 ```
 
 
-###PHASE 3 : **CALCULATE CASES**
-From the coefficients it occurs that a manual transmission **increases the efficiency of miles per gallon by `r round(f6sincrease,2) `  with a standard error of `r round(f6serror,2) ` **. 
-So, it appears that the **existence of the manual transmission, indeed improves mpg**.
-
-###PHASE 4 : **Quantify Impact on MPG**
-
-How much better is the manual transmission for mpg? 
-
-With 95% confidence this is quantified by getting predicted values from our model (fit6)
+###MPG impact of Manual Transmission
+####How much better is the manual transmission for mpg? 
 
 ```{r, message=FALSE, warning=FALSE, echo=TRUE} 
 #get coefficients
@@ -216,5 +210,10 @@ sumCoef<-summary(fit6)$coefficients
 coefficients <- sumCoef[1,1]+c(-1,1)*qt(.975,df=fit5$df)*sumCoef[1,2]
 
 ```
-The results move in the zone of **`r round(coefficients[1],2) `** to  **`r round(coefficients[2],2)`**.
+
+By the model parameters, manual transmission **increases the efficiency of miles per gallon by `r round(f6sincrease,2) `  (with a standard error of `r round(f6serror,2) ` )**. 
+
+With 95% confidence the confidence interval of the increase move in the zone from **`r round(coefficients[1],2) `** to  **`r round(coefficients[2],2)`**.
+
+So, it appears that the **existence of the manual transmission, indeed improves mpg efficiency**.
 
